@@ -1,0 +1,40 @@
+---
+title: "Project"
+author: "Group 20 Sowjanya MSL & Lalith Parsi"
+date: "04/20/2023"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,comment = '', fig.width = 3, fig.height = 3
+  )
+```
+
+##  Packages
+
+```{r message=FALSE}
+# add packages you need for this assignment
+library(tidyverse) 
+library(tigerstats)
+```
+
+
+```{r}
+# Edit me
+
+DataSet= read.csv(file = "C:/Users/hp/OneDrive/Desktop/DataSet.csv", col.names= c("species","island","culmen_length_mm","culmen_depth_mm","flipper_length_mm","body_mass_g","sex"))
+
+
+dim(DataSet)
+
+is.na(DataSet)
+
+```
+
+
+
+
+
+
