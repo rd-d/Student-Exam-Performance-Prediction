@@ -1,0 +1,276 @@
+---
+title: "Group4_Project"
+output:
+  html_document: default
+  word_document: default
+date: "2022-11-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##  Packages
+
+```{r message=FALSE}
+# add packages you need for this assignment
+library(ggplot2)
+library(tidyverse)
+library(tigerstats)
+library(tibble)
+library(dplyr)
+library(stringr)
+library(SmartEDA)
+library(kernlab)
+library(arules)
+library(readxl)
+library(readr)
+library(ggpubr)
+library(naniar)
+library(MASS)
+```
+
+Import the `Student's Performance` data set and name it `Performance`.
+
+```{r}
+Performance <-read.csv("~/Downloads/StudentsPerformance.csv")
+head(Performance)
+```
+
+* Check the number of observations and features using `dim`
+
+```{r}
+dim(Performance)
+summary(Performance)
+```
+
+> Your answer
+
+* Check for missing values
+
+```{r}
+# finds the location of missing values
+which(is.na(Performance))
+
+# finds the count of missing values 
+sum(is.na(Performance))
+```
+
+> Your answer
+
+# Creating a data frame
+```{r}
+mydata <- as.data.frame(Performance)
+summary(Performance)
+```
+
+> Your answer
+
+# Reading scores by Gender plot - Histogram
+
+```{r}
+hist(
+  Performance$reading.score, col = "orange",
+  #breaks = c(10,15,20,25,30,35,40,45,50,55), 
+  main = "Histogram of Reading Score", 
+  xlab= "Reading Score",
+  )
+```
+
+> Your answer
+
+# Writing scores by Gender plot - Boxplot
+
+```{r}
+b <- ggplot(mydata, aes(gender, writing.score, color = test.preparation.course))
+b <- b + geom_boxplot()
+b <- b + ggtitle("Writing scores by Gender Boxplot")
+b <- b + xlab("Gender") + ylab("Writing Scores")
+b
+```
+> Your answer
+
+# Math scores by Gender plot - overlay histogram
+
+```{r}
+#have black lines around each bar
+ggplot(data = Performance, aes(x = math.score)) +
+geom_histogram(aes(fill = gender),bins = 10, color = "black")
+#normalize the histogram
+ggplot(data = Performance, aes(x = math.score)) +
+geom_histogram(aes(fill = gender),bins = 10, color = "black", position = "fill")  
+```
+
+> Your answer
+
+# Hypothesis testing
+
+```{r}
+random_sample <- Performance %>
+sample_n(30)
+head(random_sample, 10)
+```
+
+> Your answer
+
+# Population and Sample Mean Comparison
+
+```{r}
+population_mean <- mean(Performance$math.score)
+population_mean
+
+sample_mean <- mean(random_sample$math.score)
+sample_mean
+
+mean_comparison <- data.frame("Type of Data" = c("Population", "Sample"), "Mean" = c(population_mean, sample_mean))
+mean_comparison
+```
+
+> Your answer
+
+# Comparison between population and Sample mean
+
+```{r}
+ggplot(mean_comparison, aes(x = Mean, y = Type.of.Data, fill = Type.of.Data)) + geom_col(width = 0.6) + ggtitle("Population vs. Sample Mean")
+```
+
+> Your answer
+
+# T test - Hypothesis Testing
+
+```{r}
+t.test(random_sample$math.score, mu = mean(Performance$math.score))
+```
+
+> Your answer
+
+# Two Sample T-Test (Divide Population into Two Parts)
+
+```{r}
+male_students <- Performance %>%
+filter(gender == "male")
+
+female_students <- Performance %>%
+filter(gender == "female")
+
+head(male_students, 5)
+
+head(female_students, 5)
+```
+
+# Comparing The Measure of Variability Between Both Samples
+
+```{r}
+
+#Variance
+var(male_students$reading.score)
+
+var(female_students$reading.score)
+
+#SD
+sd(male_students$reading.score)
+
+sd(female_students$reading.score)
+```
+
+# Visualizing The Distribution of Both Data
+
+```{r}
+ggplot(male_students, aes(x = reading.score, y = stat(density))) + geom_histogram() + geom_density() + ggtitle("Distribution of Male Students Reading Score")
+```
+
+> Your answer
+
+```{r}
+ggplot(female_students, aes(x = reading.score, y = stat(density))) + geom_histogram() + geom_density() + ggtitle("Distribution of Female Students Reading Score")
+```
+
+> Your answer
+
+# Male and Female Students Reading Score Comparison
+
+```{r}
+reading_score_df <- data.frame("Male Reading Score" = mean(male_students$reading.score), "Female Reading Score" = mean(female_students$reading.score))
+reading_score_df
+```
+
+> Your answer
+
+# Comparison of Reading Score by Gender
+
+```{r}
+boxplot(Performance$reading.score ~ Performance$gender, col = c("red", "green"), main = "Comparison of Reading Score by Gender", xlab = "Gender", ylab = "Reading Score")
+```
+
+> Your answer
+
+# Two sample t test
+
+```{r}
+t.test(reading.score ~ gender, data = Performance)
+```
+
+> Your answer
+
+
+# Regression testing 
+
+#Forward selection
+```{r}
+# Create a null model 
+intercept_only <- lm(math.score ~ 1, data=Performance[,1:8])
+# Create a full model
+all <- lm(math.score~., data=Performance[,1:8])
+# perform forward step-wise regression
+forward <- stepAIC (intercept_only, direction='forward',scope = formula(all))
+```
+
+```{r}
+ypred_forward <-predict(object = forward, newdata = Performance$math.score[1:10])
+MAE(y_pred = ypred_forward, y_true = Performance$math.score)
+MSE(y_pred = ypred_forward, y_true = Performance$math.score)
+```
+
+#backward selection
+
+```{r}
+backward <- stepAIC (all, direction='backward')
+```
+
+#Both direction
+
+```{r}
+both <- stepAIC (intercept_only, direction='both',scope = formula(all),trace = 0)
+both$anova
+```
+
+```{r}
+# Prediction models
+randIndex <- sample(1:dim(mydata)[1])
+#  # In order to split data, create a 2/3 cutpoint and round the number
+cutpoint2_3 <- floor(2*dim(mydata)[1]/5)
+
+#Use 80% of dataset as training set and remaining 20% as testing set
+sample <- sample(c(TRUE, FALSE), nrow(Performance), replace=TRUE, prob=c(0.8,0.2))
+train  <- Performance[sample, ]
+test   <- Performance[!sample, ]
+
+#------------------------------------------------------lm model
+model <- lm(math.score ~ writing.score + gender + race.ethnicity + lunch + parental.level.of.education + test.preparation.course, data=test)
+summary(model)
+lmPred <- predict(model,test,interval = "prediction", level=0.95)
+summary(lmPred)
+head(lmPred)
+
+# 1. Add predictions 
+mydata1 <- cbind(test, lmPred)
+head(mydata1)
+# 2. Regression line + confidence intervals
+p <- ggplot(mydata1, aes( fit, math.score)) +
+  geom_point() +
+  stat_smooth(method = lm)
+# 3. Add prediction intervals
+p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
+  geom_line(aes(y = upr), color = "red", linetype = "dashed") +
+xlab("Predicted Scores") + ylab("Test Scores")
+```
