@@ -1,3 +1,3 @@
 # Student-Exam-Performance-Prediction
 
-In R, I cleaned the data, preprocessed it, and visualized it (boxplot, histogram). To assess student performance characteristics, I conducted hypothesis testing and created a linear regression model. Proficiency in data analysis, preprocessing, visualization, and statistical modeling for educational insights is required.
+Utilized R for data cleaning, preprocessing, and visualization (boxplot, histogram). Performed hypothesis testing and developed a linear regression model to evaluate student performance. Proficiency in data analysis, preprocessing, visualization, and statistical modeling for educational insights is essential.
